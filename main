@@ -1,0 +1,55 @@
+import pickle
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.svm import SVC  # Import Support Vector Classifier (SVM)
+from sklearn.metrics import accuracy_score, confusion_matrix
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Step 1: Load your dataset (replace with your dataset)
+# For this example, assuming you have a CSV file with 'type' as labels and 'posts' as features.
+df = pd.read_csv("C:\\Users\\LENOVO\\my_project\\backend\\dataset\\mbti_1.csv")
+
+# Step 2: Preprocess your data
+X = df['posts']  # Features (social media posts)
+y = df['type']   # Labels (personality types)
+
+# Step 3: Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 4: Vectorize the text data using TF-IDF
+vectorizer = TfidfVectorizer(stop_words='english', max_features=5000)
+X_train_tfidf = vectorizer.fit_transform(X_train)
+X_test_tfidf = vectorizer.transform(X_test)
+
+# Step 5: Train a model (SVM instead of Random Forest)
+model = SVC(kernel='linear', random_state=42)  # Use linear kernel for SVM
+model.fit(X_train_tfidf, y_train)
+
+# Step 6: Evaluate the model
+y_pred = model.predict(X_test_tfidf)
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Model Accuracy: {accuracy*100:.2f}%')
+
+# Confusion Matrix
+conf_matrix = confusion_matrix(y_test, y_pred, labels=model.classes_)
+print("Confusion Matrix:")
+print(conf_matrix)
+
+# Plot the Confusion Matrix
+plt.figure(figsize=(10, 8))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=model.classes_, yticklabels=model.classes_)
+plt.title('Confusion Matrix')
+plt.xlabel('Predicted Labels')
+plt.ylabel('True Labels')
+plt.show()
+
+# Step 7: Save the trained model and vectorizer using pickle
+with open('model.pkl', 'wb') as model_file:
+    pickle.dump(model, model_file)
+
+with open('vectorizer.pkl', 'wb') as vectorizer_file:
+    pickle.dump(vectorizer, vectorizer_file)
+
+print("Model and vectorizer saved as model.pkl and vectorizer.pkl")
